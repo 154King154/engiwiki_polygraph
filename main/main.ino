@@ -97,7 +97,7 @@ void setup() {
           meanGsr_normal += gsr;
           Serial.print("Осталось: "); Serial.print(i); Serial.print("\n");
         }
-      
+      delayMicroseconds(350);      
     }
   meanEmgint_normal = meanEmgint_normal / TIME;
   meanGsr_normal = meanGsr_normal / TIME;
@@ -109,9 +109,9 @@ void setup() {
  
   //тестовый сбор в напряженном состоянии
   Serial.print("[КАЛИБРОВОЧНЫЙ ВОПРОС] Задайте вопрос и отправьте в консоль '1'"); Serial.print("\n");
-  int con = 0;
-  while (con != 1) {
-    if (Serial.available()) {
+  char con = '0';
+  while (con != '1') {
+      if (Serial.available()) {
        con = Serial.read();
       }
     }
@@ -125,7 +125,7 @@ void setup() {
           meanGsr_hard += gsr;
           Serial.print("Осталось: "); Serial.print(i); Serial.print("\n");
         }
-      
+      delayMicroseconds(350);       
     }
   meanEmgint_hard = meanEmgint_hard / TIME;
   meanGsr_hard = meanGsr_hard / TIME;
@@ -143,8 +143,8 @@ void loop() {
   float meanEmgint_trial = 0;
   float meanGsr_trial = 0;
   Serial.print("[НОВЫЙ ВОПРОС] Отправьте в консоль '1' и задайте вопрос испытуемому"); Serial.print("\n");
-  int con = 0;
-  while (con != 1) {
+  char con = '0';
+  while (con != '1') {
       if (Serial.available()) {
        con = Serial.read();
       }
@@ -158,7 +158,7 @@ void loop() {
           meanGsr_trial += gsr;
           Serial.print("Осталось: "); Serial.print(i); Serial.print("\n");
         }
-      
+      delayMicroseconds(350);      
     }
   Serial.print("[ПРОВЕРКА] Подсчет среднего значения и дисперсии"); Serial.print("\n");
   meanEmgint_trial = meanEmgint_trial / TIME;
