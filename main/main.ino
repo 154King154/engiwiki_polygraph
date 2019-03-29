@@ -31,11 +31,14 @@ float dispGsr_hard = 0;
 float dispEmgint_trial = 0;
 float dispGsr_trial = 0;
 
-bool readData() {
-  bool res = false;
+void readData() {
+  //bool res = false;
   if (piSerial.available()) {
     char ch = char(piSerial.read());
-    receivedData += ch;
+    while (ch != '\n') {
+      receivedData += ch;
+      ch = char(piSerial.read());
+    }
     if (ch == '\n') {
       DynamicJsonDocument doc;
       DeserializationError error = deserializeJson(doc, receivedData);
@@ -47,13 +50,13 @@ bool readData() {
         gsr    = data["gsr"];
         temp   = data["temp"];
         rr     = data["rr"];
-        res = true;
+        //res = true;
       }
       receivedData = "";
     }   
   }
   
-  return res;
+  //return res;
 }
 
 
@@ -64,7 +67,7 @@ float calculateDisp(float base[TIME], float mean) {
     for (int i = 0; i<TIME; i++) {
         disp += (base[i] - mean) * (base[i] - mean);
       }
-    return disp / TIME;
+    return sqrt(disp / TIME);
   }
 
   
@@ -72,33 +75,42 @@ float calculateDisp(float base[TIME], float mean) {
 
 
 void setup() {
+  Serial.begin(57600);
+  piSerial.begin(57600);
+}
+
+
+void loop() {
   float testEmgint[TIME];
   float testGsr[TIME];
   float meanEmgint_normal = 0;
   float meanGsr_normal = 0;
   float meanEmgint_hard = 0;
   float meanGsr_hard = 0;
-  
-  Serial.begin(57600);
-  piSerial.begin(57600);
-  
+  float meanEmgint_trial = 0;
+  float meanGsr_trial = 0;
 
-  //тестовый сбор в нормальном состоянии
-  Serial.print("Начало тестового сбора данных в спокойном состоянии, приготовьтесь!"); Serial.print("\n");
+
+//тестовый сбор в нормальном состоянии
+  Serial.print("Test"); Serial.print("\n");
   for (int i = 10; i>0; i--) {
     Serial.print(i); Serial.print("\n");
+    delay(50);
     }
-
-  for (int i = TIME-1; i>=0; i--) {
-      if (readData()) {
-          testEmgint[i] = emgint;
-          testGsr[i] = gsr;
-          meanEmgint_normal += emgint;
-          meanGsr_normal += gsr;
-          Serial.print("Осталось: "); Serial.print(i); Serial.print("\n");
-        }
-      delayMicroseconds(350);      
-    }
+  int i = 0;
+  while(i<TIME) {
+            Serial.print("Ya_uzhe_zaebalsa"); Serial.print("\n");
+            readData();
+            testEmgint[i] = emgint;
+            testGsr[i] = gsr;
+            meanEmgint_normal += emgint;
+            meanGsr_normal += gsr;
+          
+            Serial.print(gsr); Serial.print("\n");
+            i++;
+            //delay(100);
+          }
+    
   meanEmgint_normal = meanEmgint_normal / TIME;
   meanGsr_normal = meanGsr_normal / TIME;
   dispEmgint_normal = calculateDisp(testEmgint, meanEmgint_normal);
@@ -116,32 +128,32 @@ void setup() {
       }
     }
   Serial.print("[КАЛИБРОВОЧНЫЙ ВОПРОС] Калибровка напряженного состояния"); Serial.print("\n");
-
-  for (int i = TIME-1; i>=0; i--) {
-      if (readData()) {
-          testEmgint[i] = emgint;
-          testGsr[i] = gsr;
-          meanEmgint_hard += emgint;
-          meanGsr_hard += gsr;
-          Serial.print("Осталось: "); Serial.print(i); Serial.print("\n");
-        }
-      delayMicroseconds(350);       
-    }
+  i = 0;
+ while (i<TIME) {
+            readData();
+            testEmgint[i] = emgint;
+            testGsr[i] = gsr;
+            meanEmgint_hard += emgint;
+            meanGsr_hard += gsr;
+            Serial.print("Осталось: "); Serial.print(i); Serial.print("\n");
+        
+            i++;
+            }
+    
   meanEmgint_hard = meanEmgint_hard / TIME;
   meanGsr_hard = meanGsr_hard / TIME;
   dispEmgint_hard = calculateDisp(testEmgint, meanEmgint_hard);
   dispGsr_hard = calculateDisp(testGsr, meanGsr_hard);
 
   Serial.print("Калибровка завершена"); Serial.print("\n");
+
+
+
+
+
+
+  while (true) {
   
-}
-
-
-void loop() {
-  float testEmgint[TIME];
-  float testGsr[TIME];
-  float meanEmgint_trial = 0;
-  float meanGsr_trial = 0;
   Serial.print("[НОВЫЙ ВОПРОС] Отправьте в консоль '1' и задайте вопрос испытуемому"); Serial.print("\n");
   char con = '0';
   while (con != '1') {
@@ -150,16 +162,17 @@ void loop() {
       }
     }
   Serial.print("[ПРОВЕРКА] Сбор данных для определения состояния испытуемого"); Serial.print("\n");
-  for (int i = TIME-1; i>=0; i--) {
-      if (readData()) {
-          testEmgint[i] = emgint;
-          testGsr[i] = gsr;
-          meanEmgint_trial += emgint;
-          meanGsr_trial += gsr;
-          Serial.print("Осталось: "); Serial.print(i); Serial.print("\n");
-        }
-      delayMicroseconds(350);      
-    }
+  i = 0;
+  while (i < TIME) {
+            readData();
+            testEmgint[i] = emgint;
+            testGsr[i] = gsr;
+            meanEmgint_trial += emgint;
+            meanGsr_trial += gsr;
+            Serial.print("Осталось: "); Serial.print(i); Serial.print("\n");
+            i++;
+          }
+    
   Serial.print("[ПРОВЕРКА] Подсчет среднего значения и дисперсии"); Serial.print("\n");
   meanEmgint_trial = meanEmgint_trial / TIME;
   meanGsr_trial = meanGsr_trial / TIME;
@@ -169,14 +182,16 @@ void loop() {
   float trialSum = (dispEmgint_normal/dispEmgint_hard) * dispEmgint_trial + (dispGsr_normal/dispGsr_hard) * dispGsr_trial;
   float normalSum = dispEmgint_normal + dispGsr_normal;
   float hardSum = dispEmgint_hard + dispGsr_hard;
+  Serial.print(normalSum); Serial.print("\n");
+  Serial.print(hardSum); Serial.print("\n");
   if (trialSum > hardSum){
-      Serial.print("Испытуемый лжет"); Serial.print("\n");
+      Serial.print("Испытуемый лжет "); Serial.print(trialSum); Serial.print("\n");
     }
-  else if (trialSum > normalSum + 10) {
-      Serial.print("Испытуемый скорее всего лжет"); Serial.print("\n");
+  else if (trialSum > normalSum) {
+      Serial.print("Испытуемый скорее всего лжет "); Serial.print(trialSum); Serial.print("\n");
     }
   else {
-      Serial.print("Испытуемый говорит правду"); Serial.print("\n");
+      Serial.print("Испытуемый говорит правду "); Serial.print(trialSum); Serial.print("\n");
     }
-   
+  }
 }
