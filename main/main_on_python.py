@@ -18,10 +18,15 @@ gsr = 0
 temp = 0
 rr = 0
 
-TEST_EPOCH = 2
-TIME_TEST = 12
+TEST_EPOCH = 4
+TIME_TEST = 10
 MAX_GAMMA_GSR = 0.95
 MAX_GAMMA_EMGI = 0.85
+
+#ser.write(bytes('2', 'utf-8')) - red
+#ser.write(bytes('1', 'utf-8')) - blue
+#ser.write(bytes('4', 'utf-8')) - green
+#ser.write(bytes('8', 'utf-8')) - nan
 
 def convertData(byte_str):
     global alpha, beta, emgi, gsr, temp, rr
@@ -49,6 +54,7 @@ def calibration(stdGsr, stdEmgi):
 def prediction(stdGsr, stdEmgi):
     global normalStd_gsr, normalStd_emgi, maxStd_gsr, maxStd_emgi
     global MAX_GAMMA_GSR, MAX_GAMMA_EMGI
+    global ser
 
     scoreGsr = stdGsr * 100 / maxStd_gsr
     scoreEmgi = stdEmgi * 100 / maxStd_emgi
@@ -60,31 +66,21 @@ def prediction(stdGsr, stdEmgi):
     lightScore_gsr = (meanScore_gsr - normalStd_gsr * 100 / maxStd_gsr) / 2
     lightScore_emgi = (meanScore_emgi - normalStd_emgi * 100 / maxStd_emgi) / 2
 
-    if (gammaGsr > MAX_GAMMA_GSR) and (gammaEmgi < MAX_GAMMA_EMGI): #смотрим насколько сильно испытуемый реагирует по тем или иным показателям
-        if (scoreEmgi > meanScore_emgi):
-            return "false"
-        elif (scoreEmgi > lightScore_emgi):
-            return "maybe false"
-        else:
-            return "true"
-    elif (gammaGsr < MAX_GAMMA_GSR) and (gammaEmgi > MAX_GAMMA_EMGI):
-        if (scoreGsr > meanScore_gsr):
-            return "false"
-        elif (scoreGsr > lightScore_gsr):
-            return "maybe false"
-        else:
-            return "true"
+    if (scoreGsr > meanScore_gsr) and (scoreEmgi > meanScore_emgi):
+        ser.write(bytes('2', 'utf-8'))
+        return "false"
+    elif (scoreGsr > lightScore_gsr) and (scoreEmgi > meanScore_emgi):
+        ser.write(bytes('2', 'utf-8'))
+        return "false"
+    elif (scoreGsr > meanScore_gsr) and (scoreEmgi > lightScore_emgi):
+        ser.write(bytes('2', 'utf-8'))
+        return "false"
+    elif (scoreGsr > lightScore_gsr) and (scoreEmgi > lightScore_emgi):
+        ser.write(bytes('1', 'utf-8'))
+        return "maybe false"
     else:
-        if (scoreGsr > meanScore_gsr) and (scoreEmgi > meanScore_emgi):
-            return "false"
-        elif (scoreGsr > lightScore_gsr) and (scoreEmgi > meanScore_emgi):
-            return "false"
-        elif (scoreGsr > meanScore_gsr) and (scoreEmgi > lightScore_emgi):
-            return "false"
-        elif (scoreGsr > lightScore_gsr) and (scoreEmgi > lightScore_emgi):
-            return "maybe false"
-        else:
-            return "true"
+        ser.write(bytes('4', 'utf-8'))
+        return "true"
 
 #ser.open()
 time_i=time.time()
@@ -92,9 +88,11 @@ time_j=time.time()
 test_gsr = []
 test_emgi = []
 flag = False
+ser.write(bytes('8', 'utf-8'))
 while (not flag):
     try:
         print("Test---------")
+        ser.write(bytes('1', 'utf-8'))
         while (abs(time_i-time_j)<TIME_TEST):
             byte_str = ser.readline()
             if (byte_str[0]==123) and (byte_str[1]==34):
@@ -117,9 +115,11 @@ print("Start calibration---------------")
 for _ in range(TEST_EPOCH):
     flag = False
     flag_console = 0
+    ser.write(bytes('8', 'utf-8'))
     print("Write 'continue' to start-------")
     while (flag_console != 'continue'):
         flag_console = input()
+    ser.write(bytes('1', 'utf-8'))
     que_gsr = []
     que_emgi = []
     time_i = time.time()
@@ -149,9 +149,11 @@ while (True):
     flag = False
     flag_console = 0
     print("Write 'continue' to start or 'exit' to finish-------")
+    ser.write(bytes('8', 'utf-8'))
     while (flag_console != 1) and (flag_console != 2):
         flag_console = int(input())
-    if (flag_console == 1):
+    if (flag_console == "continue"):
+        ser.write(bytes('1', 'utf-8'))
         time_i = time.time()
         time_j = time.time()
         que_gsr = []
@@ -210,7 +212,7 @@ while (True):
         plt.grid(True)
 
         plt.show()
-    else:
+    elif (flag_console == "exit"):
         print("Finish---------")
         break
 
