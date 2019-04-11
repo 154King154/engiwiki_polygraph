@@ -88,7 +88,6 @@ time_j=time.time()
 test_gsr = []
 test_emgi = []
 flag = False
-ser.write(bytes('8', 'utf-8'))
 while (not flag):
     try:
         print("Test---------")
@@ -148,11 +147,11 @@ print("Start trial------------")
 while (True):
     flag = False
     flag_console = 0
-    print("Write 'continue' to start or 'exit' to finish-------")
     ser.write(bytes('8', 'utf-8'))
-    while (flag_console != 1) and (flag_console != 2):
+    print("Write '1' to start-------")
+    while (flag_console == 0):
         flag_console = int(input())
-    if (flag_console == "continue"):
+    if (flag_console != 0):
         ser.write(bytes('1', 'utf-8'))
         time_i = time.time()
         time_j = time.time()
@@ -171,6 +170,7 @@ while (True):
                 flag = True
             except:
                 print("Reconecting----------")
+        ser.write(bytes('8', 'utf-8'))
         que_gsr = np.array(que_gsr)
         que_emgi = np.array(que_emgi)
         stdGsr = np.std(np.array(que_gsr))
@@ -212,8 +212,6 @@ while (True):
         plt.grid(True)
 
         plt.show()
-    elif (flag_console == "exit"):
-        print("Finish---------")
-        break
+
 
 ser.close()
