@@ -19,12 +19,7 @@ void loop() { // run over and over
     Serial.write(piSerial.read());
   }
   a = Serial.read();
-  if (a == '4') {
-      digitalWrite(led_green, HIGH);
-      digitalWrite(led_red, LOW);
-      digitalWrite(led_blue, LOW);
-     }
-  else if (a == '1') {
+  if (a == '1') {
       digitalWrite(led_green, LOW);
       digitalWrite(led_red, LOW);
       digitalWrite(led_blue, HIGH);
@@ -34,6 +29,11 @@ void loop() { // run over and over
       digitalWrite(led_red, HIGH);
       digitalWrite(led_blue, LOW);
     }
+  else if (a == '4') {
+      digitalWrite(led_green, HIGH);
+      digitalWrite(led_red, LOW);
+      digitalWrite(led_blue, LOW);
+     }
   else if (a == '8') {
       digitalWrite(led_green, LOW);
       digitalWrite(led_red, LOW);
